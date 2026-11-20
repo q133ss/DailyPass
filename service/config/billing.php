@@ -20,6 +20,8 @@ return [
 
     'max_attempts' => (int) env('BILLING_MAX_ATTEMPTS', 3),
 
+    'opt_out_max_attempts' => (int) env('BILLING_OPTOUT_MAX_ATTEMPTS', 5),
+
     /*
     | Delay before the next attempt, indexed by the failed attempt number - 1.
     | The last value is reused if more attempts are configured.

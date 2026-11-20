@@ -20,6 +20,7 @@ abstract class TestCase extends BaseTestCase
             'billing.daily_amount' => '5.00',
             'billing.currency' => 'XTS',
             'billing.max_attempts' => 3,
+            'billing.opt_out_max_attempts' => 5,
             'billing.retry_delays_seconds' => [60, 300],
             'billing.aliases' => [],
             'services.platform.base_url' => env('PLATFORM_BASE_URL', 'http://platform-mock:8080'),

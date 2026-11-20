@@ -73,6 +73,7 @@ final class BillingService
                 ChargeOperationStatus::Pending->value,
                 ChargeOperationStatus::RetryScheduled->value,
             ])
+            ->when($only !== null, fn ($query) => $query->where('subscriber_id', $only->id))
             ->where(function ($query): void {
                 $query->whereNull('next_retry_at')
                     ->orWhere('next_retry_at', '<=', CarbonImmutable::now());

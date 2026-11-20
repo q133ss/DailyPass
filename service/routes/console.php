@@ -6,3 +6,7 @@ Schedule::command('billing:run')
     ->dailyAt('00:05')
     ->timezone((string) config('billing.timezone', 'UTC'))
     ->withoutOverlapping();
+
+Schedule::command('subscriptions:retry-optouts')
+    ->everyTenMinutes()
+    ->withoutOverlapping();

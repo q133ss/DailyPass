@@ -72,6 +72,7 @@ final class MockPlatform
             'BILLING_DAILY_AMOUNT' => '5.00',
             'BILLING_CURRENCY' => 'XTS',
             'BILLING_MAX_ATTEMPTS' => '3',
+            'BILLING_OPTOUT_MAX_ATTEMPTS' => '5',
             'BILLING_RETRY_DELAYS_SECONDS' => '60,300',
             'BILLING_ALIASES' => '{}',
             'PLATFORM_BASE_URL' => self::baseUrl(),
