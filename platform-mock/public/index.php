@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
-header('Content-Type: application/json');
+require_once __DIR__ . '/../src/Api.php';
 
-$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
-if ($path === '/health') {
-    echo json_encode(['status' => 'ok']);
-    return;
+$api = new Api(new State());
+[$status, $body, $delayMs] = $api->handle($method, $path);
+
+if ($delayMs > 0) {
+    usleep($delayMs * 1000);
 }
 
-http_response_code(404);
-echo json_encode(['statusCode' => 'E404', 'statusDetail' => 'Not found']);
+http_response_code($status);
+header('Content-Type: application/json');
+echo json_encode($body, JSON_UNESCAPED_SLASHES);
