@@ -1,0 +1,82 @@
+name: dailypass
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dailypass
+      POSTGRES_USER: dailypass
+      POSTGRES_PASSWORD: dailypass
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dailypass -d dailypass"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  platform-mock:
+    build:
+      context: ./platform-mock
+    environment:
+      APP_ID: APP_000123
+      APP_PASSWORD: demo-password-not-a-secret
+      SERVICE_WEBHOOK_URL: http://service:8000/api/webhooks/subscription
+      MOCK_STATE_FILE: /var/lib/platform-mock/state.json
+      PHP_CLI_SERVER_WORKERS: "4"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  service:
+    build:
+      context: ./service
+    environment:
+      APP_NAME: "Daily Pass"
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: "base64:8jDmmqW3h94jYcn+elAJQ288tyWU76oURQuNMyhtkoQ="
+      APP_URL: http://localhost:8000
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: info
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: dailypass
+      DB_USERNAME: dailypass
+      DB_PASSWORD: dailypass
+      CACHE_STORE: database
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: sync
+      BILLING_TIMEZONE: UTC
+      BILLING_DAILY_AMOUNT: "5.00"
+      BILLING_CURRENCY: XTS
+      BILLING_MAX_ATTEMPTS: "3"
+      BILLING_RETRY_DELAYS_SECONDS: "60,300"
+      BILLING_ALIASES: "{}"
+      PLATFORM_BASE_URL: http://platform-mock:8080
+      PLATFORM_APPLICATION_ID: APP_000123
+      PLATFORM_PASSWORD: demo-password-not-a-secret
+      PLATFORM_TIMEOUT_SECONDS: "3"
+      PLATFORM_SMS_SOURCE: DailyPass
+      PHP_CLI_SERVER_WORKERS: "4"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      platform-mock:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/up >/dev/null || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  db-data:
