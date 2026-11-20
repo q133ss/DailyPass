@@ -17,7 +17,8 @@ COPY --from=vendor /app /app
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    && touch .env
 
 EXPOSE 8000
 ENTRYPOINT ["entrypoint"]
