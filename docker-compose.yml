@@ -3,8 +3,8 @@ name: dailypass
 x-service-environment: &service-environment
   APP_NAME: "Daily Pass"
   APP_ENV: local
-  APP_DEBUG: "true"
-  APP_KEY: "base64:8jDmmqW3h94jYcn+elAJQ288tyWU76oURQuNMyhtkoQ="
+  APP_DEBUG: "${APP_DEBUG:-false}"
+  APP_KEY: "${APP_KEY:-base64:8jDmmqW3h94jYcn+elAJQ288tyWU76oURQuNMyhtkoQ=}"
   APP_URL: http://localhost:8000
   LOG_CHANNEL: stderr
   LOG_LEVEL: info
@@ -17,16 +17,16 @@ x-service-environment: &service-environment
   CACHE_STORE: database
   SESSION_DRIVER: database
   QUEUE_CONNECTION: sync
-  BILLING_TIMEZONE: UTC
-  BILLING_DAILY_AMOUNT: "5.00"
-  BILLING_CURRENCY: XTS
-  BILLING_MAX_ATTEMPTS: "3"
-  BILLING_RETRY_DELAYS_SECONDS: "15,60"
-  BILLING_ALIASES: "{}"
-  PLATFORM_BASE_URL: http://platform-mock:8080
-  PLATFORM_APPLICATION_ID: APP_000123
-  PLATFORM_PASSWORD: demo-password-not-a-secret
-  PLATFORM_TIMEOUT_SECONDS: "3"
+  BILLING_TIMEZONE: "${BILLING_TIMEZONE:-UTC}"
+  BILLING_DAILY_AMOUNT: "${BILLING_DAILY_AMOUNT:-5.00}"
+  BILLING_CURRENCY: "${BILLING_CURRENCY:-XTS}"
+  BILLING_MAX_ATTEMPTS: "${BILLING_MAX_ATTEMPTS:-3}"
+  BILLING_RETRY_DELAYS_SECONDS: "${BILLING_RETRY_DELAYS_SECONDS:-15,60}"
+  BILLING_ALIASES: "${BILLING_ALIASES:-}"
+  PLATFORM_BASE_URL: "${PLATFORM_BASE_URL:-http://platform-mock:8080}"
+  PLATFORM_APPLICATION_ID: "${PLATFORM_APPLICATION_ID:-APP_000123}"
+  PLATFORM_PASSWORD: "${PLATFORM_PASSWORD:-demo-password-not-a-secret}"
+  PLATFORM_TIMEOUT_SECONDS: "${PLATFORM_TIMEOUT_SECONDS:-3}"
   PLATFORM_SMS_SOURCE: DailyPass
   PHP_CLI_SERVER_WORKERS: "4"
 
@@ -50,8 +50,8 @@ services:
     build:
       context: ./platform-mock
     environment:
-      APP_ID: APP_000123
-      APP_PASSWORD: demo-password-not-a-secret
+      APP_ID: "${PLATFORM_APPLICATION_ID:-APP_000123}"
+      APP_PASSWORD: "${PLATFORM_PASSWORD:-demo-password-not-a-secret}"
       SERVICE_WEBHOOK_URL: http://service:8000/api/webhooks/subscription
       MOCK_STATE_FILE: /var/lib/platform-mock/state.json
       PHP_CLI_SERVER_WORKERS: "4"

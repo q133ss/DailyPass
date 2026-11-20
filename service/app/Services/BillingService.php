@@ -130,6 +130,9 @@ final class BillingService
     private function processOperation(ChargeOperation $operation, CarbonImmutable $day): string
     {
         $claim = DB::transaction(function () use ($operation, $day): ?array {
+            // Lock the subscriber first. STOP/UNREGISTERED take the same lock
+            // first, then touch operations, so this order avoids a deadlock.
+            $subscriber = Subscriber::whereKey($operation->subscriber_id)->lockForUpdate()->first();
             $locked = ChargeOperation::whereKey($operation->id)->lockForUpdate()->first();
 
             if ($locked === null || $locked->isTerminal()) {
@@ -147,8 +150,6 @@ final class BillingService
             if ($locked->next_retry_at !== null && $locked->next_retry_at->isFuture()) {
                 return null;
             }
-
-            $subscriber = Subscriber::whereKey($locked->subscriber_id)->lockForUpdate()->first();
 
             // STOP/inactive is checked immediately before a new request starts.
             if ($subscriber === null || $subscriber->stopped_at !== null || ! $subscriber->isActive()) {
@@ -199,6 +200,7 @@ final class BillingService
                 'attempt_no' => $attemptNo,
                 'external_trx_id' => $locked->external_trx_id,
                 'subscriber_id' => $subscriber->subscriber_id,
+                'subscriber_internal_id' => $subscriber->id,
                 'amount' => $locked->amount,
                 'currency' => $locked->currency,
             ];
@@ -230,9 +232,11 @@ final class BillingService
     private function recordResponse(array $claim, CarrierResponse $response): string
     {
         return DB::transaction(function () use ($claim, $response): string {
+            // Same lock order as the claim and STOP: subscriber -> operation
+            // -> attempt. This is what makes the STOP race deterministic.
+            $subscriber = Subscriber::whereKey($claim['subscriber_internal_id'])->lockForUpdate()->first();
             $operation = ChargeOperation::whereKey($claim['operation_id'])->lockForUpdate()->firstOrFail();
             $attempt = ChargeAttempt::whereKey($claim['attempt_id'])->lockForUpdate()->firstOrFail();
-            $subscriber = Subscriber::whereKey($operation->subscriber_id)->lockForUpdate()->first();
             $now = CarbonImmutable::now();
 
             $attempt->forceFill([
